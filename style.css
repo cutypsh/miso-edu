@@ -836,23 +836,133 @@ p { font-size: 1rem; line-height: 1.7; color: var(--text-muted); }
 /* ============================================================
    PRINT
    ============================================================ */
-@page { size: A4 landscape; margin: 0; }
+
 
 @media print {
-    html, body { width: 297mm; height: auto; overflow: visible; background: white; }
-    #presentation { background: white; overflow: visible; height: auto; display: block; }
+    @page {
+        size: A4 landscape;
+        margin: 0;
+    }
+
+    /* 모든 요소에 배경색 인쇄 허용 */
+    *, *::before, *::after {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    html, body {
+        width: 297mm;
+        height: 210mm;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: visible;
+        background: white;
+    }
+
+    #presentation {
+        width: 297mm;
+        height: auto;
+        background: white;
+        overflow: visible;
+        display: block;
+        margin: 0;
+        padding: 0;
+    }
+
     .slide-wrapper {
         position: relative !important;
-        top: auto !important; left: auto !important;
-        width: 297mm !important; height: 210mm !important;
-        opacity: 1 !important; transform: none !important;
-        page-break-after: always; break-after: page;
-        box-shadow: none; border-radius: 0; display: flex;
-        -webkit-print-color-adjust: exact; print-color-adjust: exact;
+        top: auto !important;
+        left: auto !important;
+        transform: none !important;
+        width: 297mm !important;
+        height: 210mm !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        opacity: 1 !important;
+        page-break-after: always;
+        break-after: page;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        display: flex !important;
+        overflow: hidden !important;
     }
-    .slide-wrapper::before { opacity: 1; }
-    .slide-wrapper.active .slide-footer { opacity: 1; }
+
+    /* 마지막 슬라이드는 불필요한 빈 페이지 방지 */
+    .slide-wrapper:last-child {
+        page-break-after: avoid;
+        break-after: avoid;
+    }
+
+    .slide-wrapper::before { opacity: 1 !important; }
+    .slide-wrapper .slide-footer { opacity: 1 !important; }
     .nav-controls { display: none !important; }
+
+    /* ── 동적 효과 레이어 숨김 ── */
+    .dynamic-orbs, .dynamic-particles, .light-sweeps, .golden-dust {
+        display: none !important;
+    }
+
+    /* ── content-area overflow visible: clip으로 인한 잘림 방지 ── */
+    .content-area {
+        overflow: visible !important;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       핵심 수정: animation:none 대신 animation-delay:-9999s 트릭 사용
+
+       [이유] Chrome에서 animation:none을 적용하면 animation-fill-mode도
+       함께 제거되어 opacity가 0(from 상태)으로 돌아가는 버그가 있음.
+       대신 음수 딜레이를 사용하면 애니메이션이 9999초 전에 시작된 것으로
+       간주되어 fill-mode:both에 의해 'to' 상태(opacity:1, transform:none)가
+       유지됨.
+       ═══════════════════════════════════════════════════════════════════ */
+
+    /* [class*="anim-"] : anim- 으로 시작하는 모든 클래스 통합 커버 */
+    [class*="anim-"] {
+        animation-delay: -9999s !important;
+        animation-fill-mode: both !important;
+        animation-play-state: paused !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        transform: none !important;
+    }
+
+    /* 기존 anim-* 선택자도 병행 유지 (이중 보험) */
+    .anim-1, .anim-2, .anim-3, .anim-4, .anim-5, .anim-fade,
+    .active .anim-1, .active .anim-2, .active .anim-3,
+    .active .anim-4, .active .anim-5, .active .anim-fade {
+        opacity: 1 !important;
+        visibility: visible !important;
+        transform: none !important;
+        animation-delay: -9999s !important;
+        animation-fill-mode: both !important;
+        animation-play-state: paused !important;
+    }
+
+    /* ── 히어로 표지 텍스트 수정 ──
+         background-clip:text + text-fill-color:transparent 조합은
+         인쇄 시 텍스트가 투명해지는 문제 → 흰색 고체로 강제 변환 */
+    .hero-heading {
+        -webkit-text-fill-color: white !important;
+        background: none !important;
+        -webkit-background-clip: unset !important;
+        background-clip: unset !important;
+        color: white !important;
+        animation-delay: -9999s !important;
+        text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6) !important;
+    }
+    .hero-kicker        { color: #c8a04a !important; }
+    .hero-subcopy       { display: block !important; }
+    .hero-subcopy p     { color: rgba(255, 255, 255, 0.92) !important; }
+    .hero-tags          { display: flex !important; flex-wrap: wrap !important; }
+    .hero-tag {
+        display: inline-flex !important;
+        color: rgba(255, 255, 255, 0.92) !important;
+        background: rgba(255, 255, 255, 0.15) !important;
+        border-color: rgba(255, 255, 255, 0.3) !important;
+    }
+    .presenter-line      { display: flex !important; color: rgba(255, 255, 255, 0.85) !important; }
+    .presenter-line .name { color: white !important; }
 }
 
 /* Golden Dust Effect */

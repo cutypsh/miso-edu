@@ -83,8 +83,123 @@ function toggleFullScreen() {
     }
 }
 
+// ── 인쇄 전/후 처리 ──────────────────────────────────────────────────────────
+// Chrome의 인쇄 엔진은 @media print CSS보다 먼저 레이아웃을 캡처하는 경우가 있어
+// beforeprint 단독으로는 불완전함. 세 가지 방법을 동시에 사용.
+
+function injectPrintStyles() {
+    if (document.getElementById('print-anim-override')) return;
+
+    // ① <style> 태그 주입 (CSS @media print 보완)
+    const style = document.createElement('style');
+    style.id = 'print-anim-override';
+    style.textContent = `
+        *, *::before, *::after {
+            animation-delay: -9999s !important;
+            animation-duration: 0.001s !important;
+            animation-fill-mode: both !important;
+            animation-play-state: paused !important;
+            transition: none !important;
+        }
+        [class*="anim-"], .anim-1, .anim-2, .anim-3, .anim-4, .anim-5, .anim-fade,
+        .active .anim-1, .active .anim-2, .active .anim-3,
+        .active .anim-4, .active .anim-5, .active .anim-fade {
+            opacity: 1 !important;
+            visibility: visible !important;
+            transform: none !important;
+        }
+        .content-area { overflow: visible !important; }
+        .hero-heading {
+            -webkit-text-fill-color: white !important;
+            background: none !important;
+            -webkit-background-clip: unset !important;
+            background-clip: unset !important;
+            color: white !important;
+        }
+        .hero-kicker       { color: #c8a04a !important; }
+        .hero-subcopy      { display: block !important; opacity: 1 !important; }
+        .hero-subcopy p    { color: rgba(255,255,255,0.92) !important; }
+        .hero-tags         { display: flex !important; flex-wrap: wrap !important; opacity: 1 !important; }
+        .hero-tag          { display: inline-flex !important; opacity: 1 !important;
+                             color: rgba(255,255,255,0.92) !important;
+                             background: rgba(255,255,255,0.15) !important; }
+        .presenter-line    { display: flex !important; opacity: 1 !important;
+                             color: rgba(255,255,255,0.85) !important; }
+        .presenter-line .name { color: white !important; }
+        .slide-wrapper .slide-footer { opacity: 1 !important; }
+        .slide-wrapper::before { opacity: 1 !important; }
+        .dynamic-orbs, .dynamic-particles, .light-sweeps, .golden-dust { display: none !important; }
+    `;
+    document.head.appendChild(style);
+
+    // ② 직접 인라인 스타일 조작 (가장 높은 우선순위 — CSS 캐스케이드 완전 우회)
+    document.querySelectorAll('[class*="anim-"]').forEach(el => {
+        el.style.setProperty('opacity',     '1',    'important');
+        el.style.setProperty('transform',   'none', 'important');
+        el.style.setProperty('visibility',  'visible', 'important');
+        el.style.setProperty('animation-delay', '-9999s', 'important');
+        el.style.setProperty('animation-play-state', 'paused', 'important');
+    });
+
+    // ③ 히어로 특정 요소 직접 처리
+    const heroHeading = document.querySelector('.hero-heading');
+    if (heroHeading) {
+        heroHeading.style.setProperty('-webkit-text-fill-color', 'white', 'important');
+        heroHeading.style.setProperty('background', 'none', 'important');
+        heroHeading.style.setProperty('color', 'white', 'important');
+    }
+    ['hero-subcopy', 'hero-tags', 'presenter-line'].forEach(cls => {
+        const el = document.querySelector('.' + cls);
+        if (el) {
+            el.style.setProperty('opacity', '1', 'important');
+            el.style.setProperty('visibility', 'visible', 'important');
+        }
+    });
+}
+
+function removePrintStyles() {
+    const style = document.getElementById('print-anim-override');
+    if (style) style.remove();
+
+    // 인라인 스타일 제거 (일반 브라우저 뷰 복원)
+    document.querySelectorAll('[class*="anim-"]').forEach(el => {
+        el.style.removeProperty('opacity');
+        el.style.removeProperty('transform');
+        el.style.removeProperty('visibility');
+        el.style.removeProperty('animation-delay');
+        el.style.removeProperty('animation-play-state');
+    });
+    const heroHeading = document.querySelector('.hero-heading');
+    if (heroHeading) {
+        heroHeading.style.removeProperty('-webkit-text-fill-color');
+        heroHeading.style.removeProperty('background');
+        heroHeading.style.removeProperty('color');
+    }
+    ['hero-subcopy', 'hero-tags', 'presenter-line'].forEach(cls => {
+        const el = document.querySelector('.' + cls);
+        if (el) {
+            el.style.removeProperty('opacity');
+            el.style.removeProperty('visibility');
+        }
+    });
+}
+
+// 방법① beforeprint 이벤트
+window.addEventListener('beforeprint', injectPrintStyles);
+window.addEventListener('afterprint',  removePrintStyles);
+
+// 방법② matchMedia — Chrome에서 beforeprint보다 신뢰성 높음
+const printMQ = window.matchMedia('print');
+const printMQHandler = (e) => { e.matches ? injectPrintStyles() : removePrintStyles(); };
+if (printMQ.addEventListener) {
+    printMQ.addEventListener('change', printMQHandler);
+} else if (printMQ.addListener) {
+    printMQ.addListener(printMQHandler); // 구형 브라우저 폴백
+}
+
 function printSlides() {
-    window.print();
+    injectPrintStyles(); // 직접 호출 시 즉시 적용
+    setTimeout(() => window.print(), 50); // 스타일 적용 후 50ms 대기
 }
 
 // ── 이벤트 바인딩 ────────────────────────────────
