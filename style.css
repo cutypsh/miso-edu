@@ -70,6 +70,7 @@ ul, ol { list-style: none; }
     transform-origin: center center;
     transition: opacity 0.65s var(--ease), transform 0.65s var(--ease);
     will-change: transform, opacity;
+    isolation: isolate;
 }
 
 /* Accent top bar */
@@ -582,7 +583,7 @@ p { font-size: 1rem; line-height: 1.7; color: var(--text-muted); }
    ============================================================ */
 .hero-bg {
     position: absolute; inset: 0;
-    background: url('표지_사회연대금융배경.png') center/cover;
+    background: url('hero_bg.png') center/cover;
     opacity: 0.7;
     z-index: 0;
     mix-blend-mode: overlay;
@@ -602,7 +603,7 @@ p { font-size: 1rem; line-height: 1.7; color: var(--text-muted); }
 }
 .abstract-bg {
     position: absolute; inset: 0;
-    background: url('슬라이드_추상배경.png') center/cover;
+    background: url('abstract_bg.png') center/cover;
     opacity: 0.14;
     z-index: 0;
     pointer-events: none;
@@ -781,8 +782,8 @@ p { font-size: 1rem; line-height: 1.7; color: var(--text-muted); }
     position: relative;
     z-index: 1;
 }
-.presenter-line .name { font-size: 1.28rem; font-weight: 900; color: white; }
-.presenter-line .role { font-size: 1rem; font-weight: 600; }
+.presenter-line .name { font-size: 1.5rem; font-weight: 900; color: white; }
+.presenter-line .role { font-size: 1.15rem; font-weight: 600; }
 
 /* ============================================================
    NAV CONTROLS (Floating Glassmorphism Bar)
@@ -900,6 +901,47 @@ p { font-size: 1rem; line-height: 1.7; color: var(--text-muted); }
     /* ── 동적 효과 레이어 숨김 ── */
     .dynamic-orbs, .dynamic-particles, .light-sweeps, .golden-dust {
         display: none !important;
+    }
+
+    /* ── PDF 출력 안정화: 블렌드/블러/그림자 평면화 ──
+         Chrome 계열 PDF 엔진은 mix-blend-mode, backdrop-filter,
+         반투명 box-shadow를 개별 레이어로 평탄화하면서
+         카드 뒤에 옅은 사각형 음영이 남는 경우가 있습니다. */
+    .slide-wrapper,
+    .slide-wrapper *,
+    .slide-wrapper *::before,
+    .slide-wrapper *::after {
+        transition: none !important;
+        will-change: auto !important;
+    }
+
+    .abstract-bg,
+    .hero-bg {
+        mix-blend-mode: normal !important;
+        animation: none !important;
+        transform: none !important;
+        filter: none !important;
+    }
+
+    .abstract-bg { opacity: 0.08 !important; }
+    .hero-bg { opacity: 0.42 !important; }
+
+    .hero-subcopy,
+    .hero-tag {
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+    }
+
+    .section-card,
+    .stat-card,
+    .highlight-panel,
+    .process-step,
+    .process-number,
+    .qa-card,
+    .contact-panel,
+    .idx-box {
+        box-shadow: none !important;
+        filter: none !important;
     }
 
     /* ── content-area overflow visible: clip으로 인한 잘림 방지 ── */

@@ -101,6 +101,10 @@ function injectPrintStyles() {
             animation-play-state: paused !important;
             transition: none !important;
         }
+        .slide-wrapper, .slide-wrapper *, .slide-wrapper *::before, .slide-wrapper *::after {
+            transition: none !important;
+            will-change: auto !important;
+        }
         [class*="anim-"], .anim-1, .anim-2, .anim-3, .anim-4, .anim-5, .anim-fade,
         .active .anim-1, .active .anim-2, .active .anim-3,
         .active .anim-4, .active .anim-5, .active .anim-fade {
@@ -109,6 +113,19 @@ function injectPrintStyles() {
             transform: none !important;
         }
         .content-area { overflow: visible !important; }
+        .abstract-bg, .hero-bg {
+            mix-blend-mode: normal !important;
+            animation: none !important;
+            transform: none !important;
+            filter: none !important;
+        }
+        .abstract-bg { opacity: 0.08 !important; }
+        .hero-bg { opacity: 0.42 !important; }
+        .section-card, .stat-card, .highlight-panel, .process-step,
+        .process-number, .qa-card, .contact-panel, .idx-box {
+            box-shadow: none !important;
+            filter: none !important;
+        }
         .hero-heading {
             -webkit-text-fill-color: white !important;
             background: none !important;
@@ -117,10 +134,14 @@ function injectPrintStyles() {
             color: white !important;
         }
         .hero-kicker       { color: #c8a04a !important; }
-        .hero-subcopy      { display: block !important; opacity: 1 !important; }
+        .hero-subcopy      { display: block !important; opacity: 1 !important;
+                             backdrop-filter: none !important;
+                             -webkit-backdrop-filter: none !important; }
         .hero-subcopy p    { color: rgba(255,255,255,0.92) !important; }
         .hero-tags         { display: flex !important; flex-wrap: wrap !important; opacity: 1 !important; }
         .hero-tag          { display: inline-flex !important; opacity: 1 !important;
+                             backdrop-filter: none !important;
+                             -webkit-backdrop-filter: none !important;
                              color: rgba(255,255,255,0.92) !important;
                              background: rgba(255,255,255,0.15) !important; }
         .presenter-line    { display: flex !important; opacity: 1 !important;
@@ -199,7 +220,8 @@ if (printMQ.addEventListener) {
 
 function printSlides() {
     injectPrintStyles(); // 직접 호출 시 즉시 적용
-    setTimeout(() => window.print(), 50); // 스타일 적용 후 50ms 대기
+    void document.body.offsetHeight; // 강제 리플로우로 인쇄 직전 스타일 적용 보장
+    requestAnimationFrame(() => setTimeout(() => window.print(), 120));
 }
 
 // ── 이벤트 바인딩 ────────────────────────────────
